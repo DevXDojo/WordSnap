@@ -8,10 +8,12 @@ WordSnap 使用 GitHub Actions 执行持续集成和发布自动化：
 发布标签采用以下格式：
 
 ```text
-wordsnap-v<app-version>-build-<github-run-number>
+wordsnap-v<major>.<minor>.<patch>
 ```
 
-应用版本来自 `src-tauri/tauri.conf.json`。GitHub Actions 运行编号用于保证标签唯一，因此，即使应用版本未变化，每个进入 `main` 分支的提交仍可生成独立发布版本。
+当仓库中不存在符合该格式的发布标签时，工作流使用 `src-tauri/tauri.conf.json` 中的版本。后续每次推送到 `main` 分支时，工作流根据最新发布标签自动增加补丁版本。例如，首次发布为 `wordsnap-v0.1.1`，下一次发布为 `wordsnap-v0.1.2`。
+
+如果三个版本文件中配置的版本高于最新发布标签，工作流优先使用配置的版本。该规则允许维护者在需要时从 `0.1.x` 升级到 `0.2.0` 或新的主版本。Release 构建期间，工作流会在临时检出目录中同步更新 `package.json`、`src-tauri/Cargo.toml`、`src-tauri/tauri.conf.json` 和相应锁文件，使标签、安装包元数据和产物文件名保持一致。这些临时版本变更不会写回 `main` 分支。
 
 ## 发布产物
 
@@ -60,9 +62,7 @@ Settings > Actions > General > Workflow permissions > Read and write permissions
 
 ## 版本管理
 
-准备用户可见的发布版本时，应在合并或推送到 `main` 分支前更新 `src-tauri/tauri.conf.json` 中的 `version`。
-
-`package.json` 和 `src-tauri/Cargo.toml` 也包含项目版本。准备具名发布版本时，必须保持这三个文件中的版本一致。
+补丁版本由 Release 工作流自动递增，无需为每次发布修改源代码中的版本。准备新的次版本或主版本时，应在合并或推送到 `main` 分支前更新 `package.json`、`src-tauri/Cargo.toml` 和 `src-tauri/tauri.conf.json`，并保持三个版本一致。配置的新版本必须高于仓库中的最新发布标签。
 
 ## 代码签名
 
